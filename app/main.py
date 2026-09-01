@@ -17,6 +17,13 @@ def root():
     }
 
 
+@app.get("/health")
+def health():
+    return{
+        "status":"healthy"
+    }
+
+
 @app.get("/transactions")
 def get_transactions():
     df=pd.read_csv("data/transactions.csv")
