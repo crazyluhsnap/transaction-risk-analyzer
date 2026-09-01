@@ -209,3 +209,25 @@ def test_openapi_documentation():
     assert "/alerts" in data["paths"]
     assert "/summary" in data["paths"]
     assert "/analyze/{transaction_id}" in data["paths"]
+
+
+def test_transactions_pagination():
+    response = client.get("/transactions?limit=5&offset=0")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert isinstance(data, list)
+    assert len(data) == 5
+
+def test_transactions_offset():
+    response = client.get("/transactions?limit=5&offset=5")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert isinstance(data, list)
+    assert len(data) == 5
+    assert data[0]["transaction_id"] == "T006"

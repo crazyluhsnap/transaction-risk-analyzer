@@ -33,10 +33,11 @@ def health():
 
 @app.get("/transactions", response_model=list[TransactionResponse])
 def get_transactions(
-    country: Optional[str]=None,
-    sender: Optional[str]=None,
-    min_amount: float=None,
-    limit: int=100
+    country: str | None=None,
+    sender: str | None=None,
+    min_amount: float | None=None,
+    limit: int | None=None,
+    offset: int = 0
 ):
     df=pd.read_csv("data/transactions.csv")
     df["timestamp"]=pd.to_datetime(df["timestamp"]).astype(str)
@@ -49,6 +50,14 @@ def get_transactions(
 
     if min_amount is not None:
         df=df[df["amount"]>=min_amount]
+
+    if offset<0:
+        offset=0
+
+    if limit is not None:
+        df=df.iloc[offset:offset+limit]
+    else:
+        df=df.iloc[offset:]
 
 
     return df.to_dict(orient="records")
