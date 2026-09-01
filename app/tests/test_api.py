@@ -53,3 +53,28 @@ def test_get_transactions():
     assert "receiver" in data[0]
     assert "amount" in data[0]
     assert "timestamp" in data[0]
+
+
+def test_get_transaction():
+
+    response = client.get("/transactions/T007")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["transaction_id"] == "T007"
+    assert data["sender"] == "A006"
+    assert data["receiver"] == "A008"
+    assert data["amount"] == 180000
+
+
+def test_get_transaction_not_found():
+
+    response = client.get("/transactions/T999")
+
+    assert response.status_code == 404
+
+    data = response.json()
+
+    assert data["detail"] == "Transaction not found"

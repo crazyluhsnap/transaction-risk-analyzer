@@ -24,6 +24,25 @@ def get_transactions():
     return df.to_dict(orient="records")
 
 
+@app.get("/transactions/{transaction_id}")
+def get_transaction(transaction_id: str):
+
+    df=pd.read_csv("data/transactions.csv")
+
+    df["timestamp"]=pd.to_datetime(df["timestamp"])
+
+    transaction=df[
+        df["transaction_id"]==transaction_id
+    ]
+    if transaction.empty:
+        raise HTTPException(
+            status_code=404,
+            detail="Transaction not found"
+        )
+
+    return transaction.iloc[0].to_dict()
+
+
 @app.post("/analyze/{transaction_id}")
 def analyze(transaction_id: str):
 
