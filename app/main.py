@@ -63,6 +63,36 @@ def get_alerts():
     return alerts
 
 
+@app.get("/summary")
+def get_summary():
+
+    df=pd.read_csv("data/transactions.csv")
+    df["timestamp"]=pd.to_datetime(df["timestamp"])
+
+    risk_counts={
+        "HIGH":0,
+        "MEDIUM":0,
+        "LOW":0
+    }
+
+    for _,row in df.iterrows():
+        transaction=row.to_dict()
+
+        result=analyze_transaction_risk(
+            df,transaction
+        )
+
+        risk_counts[result["risk_level"]]+=1
+
+    return{
+        "total_transactions":len(df),
+        "high_risk":risk_counts["HIGH"],
+        "medium_risk":risk_counts["MEDIUM"],
+        "low_risk":risk_counts["LOW"]
+    }
+
+
+
 @app.post("/analyze/{transaction_id}")
 def analyze(transaction_id: str):
 

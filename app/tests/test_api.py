@@ -115,3 +115,36 @@ def test_get_alerts_contains_high_risk_transactions():
     assert "T007" in transaction_ids
     assert "T008" in transaction_ids
     assert "T009" in transaction_ids
+
+
+def test_get_summary():
+
+    response = client.get("/summary")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["total_transactions"] == 15
+
+    assert data["high_risk"] == 3
+    assert data["medium_risk"] == 5
+    assert data["low_risk"] == 7
+
+
+
+def test_summary_counts_match_total():
+
+    response = client.get("/summary")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    risk_total = (
+        data["high_risk"]
+        + data["medium_risk"]
+        + data["low_risk"]
+    )
+
+    assert risk_total == data["total_transactions"]
