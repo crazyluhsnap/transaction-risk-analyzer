@@ -3,6 +3,12 @@ import pandas as pd
 
 from app.networkx_network_analyzer import analyze_network
 from app.analysis_service import analyze_transaction_risk
+from app.models import(
+    HealthResponse,
+    RiskAnalysisResponse,
+    TransactionResponse,
+    SummaryResponse
+)
 
 app=FastAPI(
     title="Transaction Risk Analyzer",
@@ -17,26 +23,26 @@ def root():
     }
 
 
-@app.get("/health")
+@app.get("/health", response_model=HealthResponse)
 def health():
     return{
         "status":"healthy"
     }
 
 
-@app.get("/transactions")
+@app.get("/transactions", response_model=list[TransactionResponse])
 def get_transactions():
     df=pd.read_csv("data/transactions.csv")
-    df["timestamp"]=pd.to_datetime(df["timestamp"])
+    df["timestamp"]=pd.to_datetime(df["timestamp"]).astype(str)
     return df.to_dict(orient="records")
 
 
-@app.get("/transactions/{transaction_id}")
+@app.get("/transactions/{transaction_id}", response_model=TransactionResponse)
 def get_transaction(transaction_id: str):
 
     df=pd.read_csv("data/transactions.csv")
 
-    df["timestamp"]=pd.to_datetime(df["timestamp"])
+    df["timestamp"]=pd.to_datetime(df["timestamp"]).astype(str)
 
     transaction=df[
         df["transaction_id"]==transaction_id
@@ -70,7 +76,7 @@ def get_alerts():
     return alerts
 
 
-@app.get("/summary")
+@app.get("/summary", response_model=SummaryResponse)
 def get_summary():
 
     df=pd.read_csv("data/transactions.csv")
@@ -100,7 +106,8 @@ def get_summary():
 
 
 
-@app.post("/analyze/{transaction_id}")
+@app.post("/analyze/{transaction_id}",
+          response_model=RiskAnalysisResponse)
 def analyze(transaction_id: str):
 
     df=pd.read_csv("data/transactions.csv")
