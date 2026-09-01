@@ -78,3 +78,40 @@ def test_get_transaction_not_found():
     data = response.json()
 
     assert data["detail"] == "Transaction not found"
+
+
+def test_get_alerts():
+
+    response = client.get("/alerts")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert isinstance(data, list)
+
+    assert len(data) > 0
+
+    for alert in data:
+        assert alert["risk_level"] == "HIGH"
+        assert "transaction_id" in alert
+        assert "risk_score" in alert
+        assert "reasons" in alert
+
+
+def test_get_alerts_contains_high_risk_transactions():
+
+    response = client.get("/alerts")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    transaction_ids = {
+        alert["transaction_id"]
+        for alert in data
+    }
+
+    assert "T007" in transaction_ids
+    assert "T008" in transaction_ids
+    assert "T009" in transaction_ids

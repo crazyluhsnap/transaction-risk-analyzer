@@ -43,6 +43,26 @@ def get_transaction(transaction_id: str):
     return transaction.iloc[0].to_dict()
 
 
+@app.get("/alerts")
+def get_alerts():
+    df=pd.read_csv("data/transactions.csv")
+    df["timestamp"]=pd.to_datetime(df["timestamp"])
+
+    alerts=[]
+
+    for _,row in df.iterrows():
+        transaction=row.to_dict()
+
+        result=analyze_transaction_risk(
+            df,
+            transaction
+        )
+        if result["risk_level"]=="HIGH":
+            alerts.append(result)
+
+    return alerts
+
+
 @app.post("/analyze/{transaction_id}")
 def analyze(transaction_id: str):
 
