@@ -192,3 +192,20 @@ def test_filter_transactions_with_multiple_filters():
     for transaction in data:
         assert transaction["country"]=="IN"
         assert transaction["amount"]>=100000
+
+
+def test_openapi_documentation():
+    response=client.get("/openapi.json")
+
+    assert response.status_code==200
+
+    data=response.json()
+
+    assert data["info"]["title"]=="Transaction Risk Analyzer"
+    assert data['info']["version"]=="1.0.0"
+
+    assert "/transactions" in data["paths"]
+    assert "/transactions/{transaction_id}" in data["paths"]
+    assert "/alerts" in data["paths"]
+    assert "/summary" in data["paths"]
+    assert "/analyze/{transaction_id}" in data["paths"]
