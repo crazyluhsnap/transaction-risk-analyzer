@@ -231,3 +231,33 @@ def test_transactions_offset():
     assert isinstance(data, list)
     assert len(data) == 5
     assert data[0]["transaction_id"] == "T006"
+
+
+def test_transactions_sort_by_amount_desc():
+    response = client.get("/transactions?sort_by=amount&order=desc")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert isinstance(data, list)
+    assert len(data) == 15
+
+    amounts = [transaction["amount"] for transaction in data]
+
+    assert amounts == sorted(amounts, reverse=True)
+
+
+def test_transactions_sort_by_amount_asc():
+    response = client.get("/transactions?sort_by=amount&order=asc")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert isinstance(data, list)
+    assert len(data) == 15
+
+    amounts = [transaction["amount"] for transaction in data]
+
+    assert amounts == sorted(amounts)

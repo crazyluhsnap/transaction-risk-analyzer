@@ -37,7 +37,9 @@ def get_transactions(
     sender: str | None=None,
     min_amount: float | None=None,
     limit: int | None=None,
-    offset: int = 0
+    offset: int = 0,
+    sort_by: str | None=None,
+    order: str = "asc"
 ):
     df=pd.read_csv("data/transactions.csv")
     df["timestamp"]=pd.to_datetime(df["timestamp"]).astype(str)
@@ -50,6 +52,10 @@ def get_transactions(
 
     if min_amount is not None:
         df=df[df["amount"]>=min_amount]
+
+    if sort_by is not None:
+        ascending=order.lower()=="asc"
+        df=df.sort_values(by=sort_by,ascending=ascending)
 
     if offset<0:
         offset=0
