@@ -157,3 +157,38 @@ def test_summary_counts_match_total():
     )
 
     assert risk_total == data["total_transactions"]
+
+
+def test_filter_transactions_by_count():
+    response=client.get("/transactions?country=IN")
+    assert response.status_code==200
+    data=response.json()
+    assert len(data)>0
+    for transaction in data:
+        assert transaction["country"]=="IN"
+
+def test_filter_transactions_by_sender():
+    response=client.get("/transactions?sender=A012")
+    assert response.status_code==200
+    data=response.json()
+    assert len(data)>0
+    for transaction in data:
+        assert transaction["sender"]=="A012"
+
+def test_filter_transactions_by_min_amount():
+    response=client.get("/transactions?min_amount=100000")
+    assert response.status_code==200
+    data=response.json()
+    assert len(data)>0
+    for transaction in data:
+        assert transaction["amount"]>=100000
+
+def test_filter_transactions_with_multiple_filters():
+    response=client.get(
+        "/transactions?country=IN&min_amount=100000"
+    )
+    assert response.status_code==200
+    data=response.json()
+    for transaction in data:
+        assert transaction["country"]=="IN"
+        assert transaction["amount"]>=100000

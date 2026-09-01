@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 import pandas as pd
+from typing import Optional
 
 from app.networkx_network_analyzer import analyze_network
 from app.analysis_service import analyze_transaction_risk
@@ -31,9 +32,25 @@ def health():
 
 
 @app.get("/transactions", response_model=list[TransactionResponse])
-def get_transactions():
+def get_transactions(
+    country: Optional[str]=None,
+    sender: Optional[str]=None,
+    min_amount: float=None,
+    limit: int=100
+):
     df=pd.read_csv("data/transactions.csv")
     df["timestamp"]=pd.to_datetime(df["timestamp"]).astype(str)
+
+    if country is not None:
+        df=df[df["country"]==country]
+
+    if sender is not None:
+        df=df[df["sender"]==sender]
+
+    if min_amount is not None:
+        df=df[df["amount"]>=min_amount]
+
+
     return df.to_dict(orient="records")
 
 
