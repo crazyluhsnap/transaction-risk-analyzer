@@ -17,6 +17,13 @@ def root():
     }
 
 
+@app.get("/transactions")
+def get_transactions():
+    df=pd.read_csv("data/transactions.csv")
+    df["timestamp"]=pd.to_datetime(df["timestamp"])
+    return df.to_dict(orient="records")
+
+
 @app.post("/analyze/{transaction_id}")
 def analyze(transaction_id: str):
 

@@ -35,4 +35,21 @@ def test_analyze_unknown_transaction():
 
     assert response.json()["detail"]=="Transaction not found"
 
-    
+
+def test_get_transactions():
+
+    response = client.get("/transactions")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert isinstance(data, list)
+
+    assert len(data) > 0
+
+    assert "transaction_id" in data[0]
+    assert "sender" in data[0]
+    assert "receiver" in data[0]
+    assert "amount" in data[0]
+    assert "timestamp" in data[0]
