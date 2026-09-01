@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 import pandas as pd
 from typing import Optional
 
@@ -36,10 +36,10 @@ def get_transactions(
     country: str | None=None,
     sender: str | None=None,
     min_amount: float | None=None,
-    limit: int | None=None,
-    offset: int = 0,
+    limit: int | None=Query(None,ge=1),
+    offset: int = Query(0,ge=0),
     sort_by: str | None=None,
-    order: str = "asc"
+    order: str = Query("asc",pattern="^(asc|desc)$")
 ):
     df=pd.read_csv("data/transactions.csv")
     df["timestamp"]=pd.to_datetime(df["timestamp"]).astype(str)
@@ -54,11 +54,23 @@ def get_transactions(
         df=df[df["amount"]>=min_amount]
 
     if sort_by is not None:
+        allowed_sort_columns=[
+            "transaction_id",
+            "timestamp",
+            "sender",
+            "receiver",
+            "amount",
+            "country"
+        ]
+        if sort_by not in allowed_sort_columns:
+            raise HTTPException(
+                status_code=422,
+                detail="Invalid sort column"
+            )
         ascending=order.lower()=="asc"
         df=df.sort_values(by=sort_by,ascending=ascending)
 
-    if offset<0:
-        offset=0
+
 
     if limit is not None:
         df=df.iloc[offset:offset+limit]

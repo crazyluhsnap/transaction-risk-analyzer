@@ -261,3 +261,25 @@ def test_transactions_sort_by_amount_asc():
     amounts = [transaction["amount"] for transaction in data]
 
     assert amounts == sorted(amounts)
+
+
+def test_transactions_invalid_limit():
+    response = client.get("/transactions?limit=-5")
+
+    assert response.status_code == 422
+
+
+def test_transactions_invalid_offset():
+    response = client.get("/transactions?offset=-10")
+
+    assert response.status_code == 422
+
+def test_transactions_invalid_order():
+    response = client.get("/transactions?order=invalid")
+
+    assert response.status_code == 422
+
+def test_transactions_invalid_sort_column():
+    response = client.get("/transactions?sort_by=invalid")
+
+    assert response.status_code == 422
