@@ -7,6 +7,32 @@ function App() {
   const [transactions, setTransactions] = useState([]);
   const [transactionsLoading, setTransactionsLoading] = useState(true);
   const [searchId, setSearchId] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
+
+  const PAGE_SIZE = 5;
+
+  const fetchTransactions = (page = 1) => {
+    setTransactionsLoading(true);
+
+    const offset = (page - 1) * PAGE_SIZE;
+
+    fetch(
+      `http://127.0.0.1:8000/transactions?limit=${
+        PAGE_SIZE + 1
+      }&offset=${offset}&sort_by=amount&order=desc`,
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        setHasNextPage(data.length > PAGE_SIZE);
+
+        setTransactions(data.slice(0, PAGE_SIZE));
+
+        setCurrentPage(page);
+      })
+      .catch((error) => console.error("Error fetching transactions:", error))
+      .finally(() => setTransactionsLoading(false));
+  };
 
   useEffect(() => {
     fetch("http://127.0.0.1:8000/summary")
@@ -19,30 +45,31 @@ function App() {
       .then((data) => setAlerts(data))
       .catch((error) => console.error("Error fetching alerts:", error));
 
-    fetch("http://127.0.0.1:8000/transactions?limit=5&offset=0&sort_by=amount&order=desc")
-      .then((response) => response.json())
-      .then((data) => setTransactions(data))
-      .catch((error) =>
-      console.error("Error fetching transactions:", error))
-      .finally(() => setTransactionsLoading(false));
+    fetchTransactions(1);
   }, []);
 
-
   const searchTransactions = () => {
-  setTransactionsLoading(true);
+    if (!searchId.trim()) {
+      fetchTransactions(1);
+      return;
+    }
 
-  const url = searchId.trim()
-    ? `http://127.0.0.1:8000/transactions?transaction_id=${searchId.trim()}`
-    : "http://127.0.0.1:8000/transactions?limit=5&offset=0&sort_by=amount&order=desc";
+    setTransactionsLoading(true);
+    setCurrentPage(1);
 
-  fetch(url)
-    .then((response) => response.json())
-    .then((data) => setTransactions(data))
-    .catch((error) =>
-      console.error("Error searching transactions:", error)
-    )
-    .finally(() => setTransactionsLoading(false));
-};
+    const url = `http://127.0.0.1:8000/transactions?transaction_id=${searchId.trim()}`;
+
+    fetch(url)
+      .then((response) => response.json())
+      .then((data) => setTransactions(data))
+      .catch((error) => console.error("Error searching transactions:", error))
+      .finally(() => setTransactionsLoading(false));
+  };
+
+  const resetTransactions = () => {
+    setSearchId("");
+    fetchTransactions(1);
+  };
 
   return (
     <div className="app">
@@ -80,83 +107,103 @@ function App() {
           <h2>High Risk Transactions</h2>
 
           {alerts.length === 0 ? (
-          <p>No high-risk transactions found.</p>
+            <p>No high-risk transactions found.</p>
           ) : (
-          <div className="alerts">
-            {alerts.map((alert) => (
-              <div className="alert-card" key={alert.transaction_id}>
-                <div>
-                  <strong>{alert.transaction_id}</strong>
-                  <span>Risk Score: {alert.risk_score}</span>
+            <div className="alerts">
+              {alerts.map((alert) => (
+                <div className="alert-card" key={alert.transaction_id}>
+                  <div>
+                    <strong>{alert.transaction_id}</strong>
+                    <span>Risk Score: {alert.risk_score}</span>
+                  </div>
+
+                  <div>
+                    <strong>{alert.risk_level}</strong>
+                  </div>
+
+                  <div>
+                    {alert.reasons.map((reason) => (
+                      <span className="reason" key={reason}>
+                        {reason}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-
-              <div>
-                <strong>{alert.risk_level}</strong>
-              </div>
-
-              <div>
-                {alert.reasons.map((reason) => (
-                  <span className="reason" key={reason}>
-                  {reason}
-                  </span>
-                ))}
-              </div>
+              ))}
             </div>
-           ))}
-          </div>
-           )}
+          )}
         </section>
 
         <section className="dashboard-section">
-  <h2>Transactions</h2>
+          <h2>Transactions</h2>
 
-  <div className="search-box">
-    <input
-      type="text"
-      placeholder="Search Transaction ID (e.g. T007)"
-      value={searchId}
-      onChange={(event) => setSearchId(event.target.value)}
-    />
+          <div className="search-box">
+            <input
+              type="text"
+              placeholder="Search Transaction ID (e.g. T007)"
+              value={searchId}
+              onChange={(event) => setSearchId(event.target.value)}
+            />
 
-    <button onClick={searchTransactions}>
-      Search
-    </button>
-  </div>
+            <button onClick={searchTransactions}>Search</button>
 
-  {transactionsLoading ? (
-    <p>Loading transactions...</p>
-  ) : transactions.length === 0 ? (
-    <p>No transactions found.</p>
-  ) : (
-    <div className="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Transaction ID</th>
-            <th>Sender</th>
-            <th>Receiver</th>
-            <th>Amount</th>
-            <th>Country</th>
-            <th>Timestamp</th>
-          </tr>
-        </thead>
+            <button onClick={resetTransactions}>Reset</button>
+          </div>
 
-        <tbody>
-          {transactions.map((transaction) => (
-            <tr key={transaction.transaction_id}>
-              <td>{transaction.transaction_id}</td>
-              <td>{transaction.sender}</td>
-              <td>{transaction.receiver}</td>
-              <td>₹{transaction.amount.toLocaleString()}</td>
-              <td>{transaction.country}</td>
-              <td>{transaction.timestamp}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )}
-</section>
+          {transactionsLoading ? (
+            <p>Loading transactions...</p>
+          ) : transactions.length === 0 ? (
+            <p>No transactions found.</p>
+          ) : (
+            <>
+              <div className="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Transaction ID</th>
+                      <th>Sender</th>
+                      <th>Receiver</th>
+                      <th>Amount</th>
+                      <th>Country</th>
+                      <th>Timestamp</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {transactions.map((transaction) => (
+                      <tr key={transaction.transaction_id}>
+                        <td>{transaction.transaction_id}</td>
+                        <td>{transaction.sender}</td>
+                        <td>{transaction.receiver}</td>
+                        <td>₹{transaction.amount.toLocaleString()}</td>
+                        <td>{transaction.country}</td>
+                        <td>{transaction.timestamp}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="pagination">
+                <button
+                  onClick={() => fetchTransactions(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  ← Previous
+                </button>
+
+                <span>Page {currentPage}</span>
+
+                <button
+                  onClick={() => fetchTransactions(currentPage + 1)}
+                  disabled={!hasNextPage}
+                >
+                  Next →
+                </button>
+              </div>
+            </>
+          )}
+        </section>
       </main>
     </div>
   );

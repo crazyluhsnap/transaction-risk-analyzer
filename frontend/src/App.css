@@ -192,3 +192,44 @@ tbody tr:hover {
 .search-box button:hover {
   opacity: 0.9;
 }
+
+.search-box button:last-child {
+  background: #6b7280;
+}
+
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.pagination button {
+  width: 110px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  color: #111827;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination span {
+  min-width: 60px;
+  text-align: center;
+  font-weight: bold;
+  color: #111827;
+}
