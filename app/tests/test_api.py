@@ -283,3 +283,17 @@ def test_transactions_invalid_sort_column():
     response = client.get("/transactions?sort_by=invalid")
 
     assert response.status_code == 422
+
+
+def test_get_nonexistent_transaction():
+    response=client.get("/transactions/INVALID")
+    assert response.status_code==404
+    data=response.json()
+    assert "detail" in data
+
+def test_analyze_nonexistent_transaction():
+    response=client.post("/analyze/INVALID")
+    assert response.status_code==404
+    data=response.json()
+    assert "detail" in data
+    
