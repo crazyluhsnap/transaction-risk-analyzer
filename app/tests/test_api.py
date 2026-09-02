@@ -296,4 +296,34 @@ def test_analyze_nonexistent_transaction():
     assert response.status_code==404
     data=response.json()
     assert "detail" in data
-    
+
+
+def test_filter_transactions_by_transaction_id():
+    response = client.get("/transactions?transaction_id=T007")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["transaction_id"] == "T007"
+
+def test_filter_transactions_by_invalid_transaction_id():
+    response = client.get("/transactions?transaction_id=INVALID")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 0
+
+
+def test_filter_transactions_by_transaction_id_case_insensitive():
+    response = client.get("/transactions?transaction_id=t004")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["transaction_id"] == "T004"

@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query
 import pandas as pd
 from typing import Optional
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.networkx_network_analyzer import analyze_network
 from app.analysis_service import analyze_transaction_risk
@@ -15,6 +16,14 @@ app=FastAPI(
     title="Transaction Risk Analyzer",
     description="API for analyzing transaction risk",
     version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/")
@@ -39,11 +48,14 @@ def get_transactions(
     limit: int | None=Query(None,ge=1),
     offset: int = Query(0,ge=0),
     sort_by: str | None=None,
-    order: str = Query("asc",pattern="^(asc|desc)$")
+    order: str = Query("asc",pattern="^(asc|desc)$"),
+    transaction_id: str | None=None
 ):
     df=pd.read_csv("data/transactions.csv")
     df["timestamp"]=pd.to_datetime(df["timestamp"]).astype(str)
 
+    if transaction_id is not None:
+        df=df[df["transaction_id"].str.upper()==transaction_id.upper()]
     if country is not None:
         df=df[df["country"]==country]
 
