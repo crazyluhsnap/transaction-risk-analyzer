@@ -10,6 +10,7 @@ function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAnalysis, setSelectedAnalysis] = useState(null);
   const [hasNextPage, setHasNextPage] = useState(false);
+  const [riskAnalyses, setRiskAnalyses] = useState({});
 
   const PAGE_SIZE = 5;
 
@@ -25,16 +26,39 @@ function App() {
     )
       .then((response) => response.json())
       .then((data) => {
+        const pageTransactions = data.slice(0, PAGE_SIZE);
+
         setHasNextPage(data.length > PAGE_SIZE);
-
-        setTransactions(data.slice(0, PAGE_SIZE));
-
+        setTransactions(pageTransactions);
         setCurrentPage(page);
+        setSelectedAnalysis(null);
+
+        return Promise.all(
+          pageTransactions.map((transaction) =>
+            fetch(
+              `http://127.0.0.1:8000/analyze/${transaction.transaction_id}`,
+              {
+                method: "POST",
+              },
+            ).then((response) => response.json()),
+          ),
+        );
+      })
+      .then((analyses) => {
+        const analysisMap = {};
+
+        analyses.forEach((analysis) => {
+          analysisMap[analysis.transaction_id] = analysis;
+        });
+
+        setRiskAnalyses((previous) => ({
+          ...previous,
+          ...analysisMap,
+        }));
       })
       .catch((error) => console.error("Error fetching transactions:", error))
       .finally(() => setTransactionsLoading(false));
   };
-
   useEffect(() => {
     fetch("http://127.0.0.1:8000/summary")
       .then((response) => response.json())
@@ -57,12 +81,33 @@ function App() {
 
     setTransactionsLoading(true);
     setCurrentPage(1);
+    setSelectedAnalysis(null);
 
-    const url = `http://127.0.0.1:8000/transactions?transaction_id=${searchId.trim()}`;
+    const transactionId = searchId.trim();
 
-    fetch(url)
+    fetch(`http://127.0.0.1:8000/transactions?transaction_id=${transactionId}`)
       .then((response) => response.json())
-      .then((data) => setTransactions(data))
+      .then((data) => {
+        setTransactions(data);
+
+        if (data.length === 0) {
+          return null;
+        }
+
+        const foundTransactionId = data[0].transaction_id;
+
+        return fetch(`http://127.0.0.1:8000/analyze/${foundTransactionId}`, {
+          method: "POST",
+        }).then((response) => response.json());
+      })
+      .then((analysis) => {
+        if (analysis) {
+          setRiskAnalyses((previous) => ({
+            ...previous,
+            [analysis.transaction_id]: analysis,
+          }));
+        }
+      })
       .catch((error) => console.error("Error searching transactions:", error))
       .finally(() => setTransactionsLoading(false));
   };
@@ -178,6 +223,7 @@ function App() {
                       <th>Amount</th>
                       <th>Country</th>
                       <th>Timestamp</th>
+                      <th>Risk Level</th>
                       <th>Action</th>
                     </tr>
                   </thead>
@@ -191,6 +237,24 @@ function App() {
                         <td>₹{transaction.amount.toLocaleString()}</td>
                         <td>{transaction.country}</td>
                         <td>{transaction.timestamp}</td>
+
+                        <td>
+                          {riskAnalyses[transaction.transaction_id] ? (
+                            <span
+                              className={`table-risk-badge ${riskAnalyses[
+                                transaction.transaction_id
+                              ].risk_level.toLowerCase()}`}
+                            >
+                              {
+                                riskAnalyses[transaction.transaction_id]
+                                  .risk_level
+                              }
+                            </span>
+                          ) : (
+                            <span>Loading...</span>
+                          )}
+                        </td>
+
                         <td>
                           <button
                             className="risk-button"

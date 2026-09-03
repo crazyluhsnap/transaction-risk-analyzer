@@ -371,3 +371,28 @@ tbody tr:hover {
 .modal-close-button:hover {
   opacity: 0.9;
 }
+
+.table-risk-badge {
+  display: inline-block;
+  min-width: 75px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.table-risk-badge.high {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.table-risk-badge.medium {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.table-risk-badge.low {
+  background: #dcfce7;
+  color: #15803d;
+}
