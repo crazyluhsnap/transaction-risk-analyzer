@@ -11,19 +11,36 @@ function App() {
   const [selectedAnalysis, setSelectedAnalysis] = useState(null);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [riskAnalyses, setRiskAnalyses] = useState({});
+  const [selectedCountry, setSelectedCountry] = useState("");
+  const [minAmount, setMinAmount] = useState("");
 
   const PAGE_SIZE = 5;
 
-  const fetchTransactions = (page = 1) => {
+  const fetchTransactions = (
+    page = 1,
+    country = selectedCountry,
+    amount = minAmount,
+  ) => {
     setTransactionsLoading(true);
 
     const offset = (page - 1) * PAGE_SIZE;
 
-    fetch(
-      `http://127.0.0.1:8000/transactions?limit=${
-        PAGE_SIZE + 1
-      }&offset=${offset}&sort_by=amount&order=desc`,
-    )
+    const params = new URLSearchParams({
+      limit: String(PAGE_SIZE + 1),
+      offset: String(offset),
+      sort_by: "amount",
+      order: "desc",
+    });
+
+    if (country) {
+      params.append("country", country);
+    }
+
+    if (amount) {
+      params.append("min_amount", amount);
+    }
+
+    fetch(`http://127.0.0.1:8000/transactions?${params.toString()}`)
       .then((response) => response.json())
       .then((data) => {
         const pageTransactions = data.slice(0, PAGE_SIZE);
@@ -59,6 +76,7 @@ function App() {
       .catch((error) => console.error("Error fetching transactions:", error))
       .finally(() => setTransactionsLoading(false));
   };
+
   useEffect(() => {
     fetch("http://127.0.0.1:8000/summary")
       .then((response) => response.json())
@@ -74,47 +92,52 @@ function App() {
   }, []);
 
   const searchTransactions = () => {
-    if (!searchId.trim()) {
-      fetchTransactions(1);
+    if (searchId.trim()) {
+      setTransactionsLoading(true);
+      setCurrentPage(1);
+      setSelectedAnalysis(null);
+
+      const transactionId = searchId.trim();
+
+      fetch(
+        `http://127.0.0.1:8000/transactions?transaction_id=${transactionId}`,
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          setTransactions(data);
+
+          if (data.length === 0) {
+            return null;
+          }
+
+          const foundTransactionId = data[0].transaction_id;
+
+          return fetch(`http://127.0.0.1:8000/analyze/${foundTransactionId}`, {
+            method: "POST",
+          }).then((response) => response.json());
+        })
+        .then((analysis) => {
+          if (analysis) {
+            setRiskAnalyses((previous) => ({
+              ...previous,
+              [analysis.transaction_id]: analysis,
+            }));
+          }
+        })
+        .catch((error) => console.error("Error searching transactions:", error))
+        .finally(() => setTransactionsLoading(false));
+
       return;
     }
 
-    setTransactionsLoading(true);
-    setCurrentPage(1);
-    setSelectedAnalysis(null);
-
-    const transactionId = searchId.trim();
-
-    fetch(`http://127.0.0.1:8000/transactions?transaction_id=${transactionId}`)
-      .then((response) => response.json())
-      .then((data) => {
-        setTransactions(data);
-
-        if (data.length === 0) {
-          return null;
-        }
-
-        const foundTransactionId = data[0].transaction_id;
-
-        return fetch(`http://127.0.0.1:8000/analyze/${foundTransactionId}`, {
-          method: "POST",
-        }).then((response) => response.json());
-      })
-      .then((analysis) => {
-        if (analysis) {
-          setRiskAnalyses((previous) => ({
-            ...previous,
-            [analysis.transaction_id]: analysis,
-          }));
-        }
-      })
-      .catch((error) => console.error("Error searching transactions:", error))
-      .finally(() => setTransactionsLoading(false));
+    fetchTransactions(1);
   };
 
   const resetTransactions = () => {
     setSearchId("");
-    fetchTransactions(1);
+    setSelectedCountry("");
+    setMinAmount("");
+    fetchTransactions(1, "", "");
   };
 
   const analyzeTransaction = (transactionId) => {
@@ -200,6 +223,26 @@ function App() {
               placeholder="Search Transaction ID (e.g. T007)"
               value={searchId}
               onChange={(event) => setSearchId(event.target.value)}
+            />
+
+            <select
+              value={selectedCountry}
+              onChange={(event) => {
+                setSelectedCountry(event.target.value);
+                setSearchId("");
+              }}
+            >
+              <option value="">All Countries</option>
+              <option value="IN">India (IN)</option>
+              <option value="US">United States (US)</option>
+            </select>
+
+            <input
+              type="number"
+              placeholder="Min Amount"
+              value={minAmount}
+              onChange={(event) => setMinAmount(event.target.value)}
+              min="0"
             />
 
             <button onClick={searchTransactions}>Search</button>
