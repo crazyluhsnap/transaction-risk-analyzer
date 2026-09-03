@@ -8,6 +8,7 @@ function App() {
   const [transactionsLoading, setTransactionsLoading] = useState(true);
   const [searchId, setSearchId] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedAnalysis, setSelectedAnalysis] = useState(null);
   const [hasNextPage, setHasNextPage] = useState(false);
 
   const PAGE_SIZE = 5;
@@ -69,6 +70,17 @@ function App() {
   const resetTransactions = () => {
     setSearchId("");
     fetchTransactions(1);
+  };
+
+  const analyzeTransaction = (transactionId) => {
+    fetch(`http://127.0.0.1:8000/analyze/${transactionId}`, {
+      method: "POST",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        setSelectedAnalysis(data);
+      })
+      .catch((error) => console.error("Error analyzing transaction:", error));
   };
 
   return (
@@ -166,6 +178,7 @@ function App() {
                       <th>Amount</th>
                       <th>Country</th>
                       <th>Timestamp</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
 
@@ -178,6 +191,16 @@ function App() {
                         <td>₹{transaction.amount.toLocaleString()}</td>
                         <td>{transaction.country}</td>
                         <td>{transaction.timestamp}</td>
+                        <td>
+                          <button
+                            className="risk-button"
+                            onClick={() =>
+                              analyzeTransaction(transaction.transaction_id)
+                            }
+                          >
+                            View Risk
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -201,6 +224,58 @@ function App() {
                   Next →
                 </button>
               </div>
+
+              {selectedAnalysis && (
+                <div className="risk-modal-overlay">
+                  <div className="risk-modal">
+                    <button
+                      className="close-button"
+                      onClick={() => setSelectedAnalysis(null)}
+                    >
+                      ×
+                    </button>
+
+                    <h3>Risk Analysis - {selectedAnalysis.transaction_id}</h3>
+
+                    <div className="risk-detail-grid">
+                      <div>
+                        <span>Risk Score</span>
+                        <strong>{selectedAnalysis.risk_score}</strong>
+                      </div>
+
+                      <div>
+                        <span>Risk Level</span>
+                        <strong
+                          className={`risk-level ${selectedAnalysis.risk_level.toLowerCase()}`}
+                        >
+                          {selectedAnalysis.risk_level}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="risk-reasons">
+                      <h4>Reasons</h4>
+
+                      {selectedAnalysis.reasons.length === 0 ? (
+                        <p>No risk indicators detected.</p>
+                      ) : (
+                        <ul>
+                          {selectedAnalysis.reasons.map((reason) => (
+                            <li key={reason}>{reason}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    <button
+                      className="modal-close-button"
+                      onClick={() => setSelectedAnalysis(null)}
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </section>
