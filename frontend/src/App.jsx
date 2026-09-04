@@ -14,6 +14,7 @@ function App() {
   const [selectedCountry, setSelectedCountry] = useState("");
   const [minAmount, setMinAmount] = useState("");
   const [selectedRiskLevel, setSelectedRiskLevel] = useState("");
+  const [minRiskScore, setMinRiskScore] = useState("");
 
   const PAGE_SIZE = 5;
 
@@ -22,6 +23,7 @@ function App() {
     country = selectedCountry,
     amount = minAmount,
     riskLevel = selectedRiskLevel,
+    riskScore = minRiskScore,
   ) => {
     setTransactionsLoading(true);
 
@@ -44,6 +46,10 @@ function App() {
 
     if (riskLevel) {
       params.append("risk_level", riskLevel);
+    }
+
+    if (riskScore) {
+      params.append("min_risk_score", riskScore);
     }
 
     fetch(`http://127.0.0.1:8000/transactions?${params.toString()}`)
@@ -144,7 +150,8 @@ function App() {
     setSelectedCountry("");
     setMinAmount("");
     setSelectedRiskLevel("");
-    fetchTransactions(1, "", "","");
+    setMinRiskScore("");
+    fetchTransactions(1, "", "", "", "");
   };
 
   const analyzeTransaction = (transactionId) => {
@@ -250,6 +257,15 @@ function App() {
               value={minAmount}
               onChange={(event) => setMinAmount(event.target.value)}
               min="0"
+            />
+
+            <input
+              type="number"
+              placeholder="Min Risk Score"
+              value={minRiskScore}
+              onChange={(event) => setMinRiskScore(event.target.value)}
+              min="0"
+              max="100"
             />
 
             <select
