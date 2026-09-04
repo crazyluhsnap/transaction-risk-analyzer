@@ -344,3 +344,20 @@ def test_filter_transactions_by_risk_level():
     }
 
     assert transaction_ids == {"T007", "T008", "T009"}
+    
+    
+def test_risk_level_filter_uses_full_transaction_dataset():
+    response = client.get(
+        "/transactions?min_amount=175000&risk_level=HIGH"
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    transaction_ids = {
+        transaction["transaction_id"]
+        for transaction in data
+    }
+
+    assert transaction_ids == {"T007", "T008"}

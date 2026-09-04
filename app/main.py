@@ -54,6 +54,7 @@ def get_transactions(
 ):
     df=pd.read_csv("data/transactions.csv")
     df["timestamp"]=pd.to_datetime(df["timestamp"]).astype(str)
+    analysis_df = df.copy()
 
     if transaction_id is not None:
         df=df[df["transaction_id"].str.upper()==transaction_id.upper()]
@@ -73,7 +74,7 @@ def get_transactions(
             transaction = row.to_dict()
 
             result = analyze_transaction_risk(
-                df,
+                analysis_df,
                 transaction
             )
 
