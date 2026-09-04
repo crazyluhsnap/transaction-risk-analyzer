@@ -45,6 +45,7 @@ def get_transactions(
     country: str | None=None,
     sender: str | None=None,
     min_amount: float | None=None,
+    risk_level: str | None = Query(None, pattern="^(LOW|MEDIUM|HIGH)$"),
     limit: int | None=Query(None,ge=1),
     offset: int = Query(0,ge=0),
     sort_by: str | None=None,
@@ -64,6 +65,23 @@ def get_transactions(
 
     if min_amount is not None:
         df=df[df["amount"]>=min_amount]
+
+    if risk_level is not None:
+        risk_levels = []
+
+        for _, row in df.iterrows():
+            transaction = row.to_dict()
+
+            result = analyze_transaction_risk(
+                df,
+                transaction
+            )
+
+            risk_levels.append(result["risk_level"])
+
+        df["risk_level"] = risk_levels
+        df = df[df["risk_level"] == risk_level]
+        df = df.drop(columns=["risk_level"])
 
     if sort_by is not None:
         allowed_sort_columns=[

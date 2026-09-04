@@ -327,3 +327,20 @@ def test_filter_transactions_by_transaction_id_case_insensitive():
 
     assert len(data) == 1
     assert data[0]["transaction_id"] == "T004"
+
+
+def test_filter_transactions_by_risk_level():
+    response = client.get("/transactions?risk_level=HIGH")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 3
+
+    transaction_ids = {
+        transaction["transaction_id"]
+        for transaction in data
+    }
+
+    assert transaction_ids == {"T007", "T008", "T009"}
