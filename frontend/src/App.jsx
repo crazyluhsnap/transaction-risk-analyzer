@@ -13,6 +13,7 @@ function App() {
   const [riskAnalyses, setRiskAnalyses] = useState({});
   const [selectedCountry, setSelectedCountry] = useState("");
   const [minAmount, setMinAmount] = useState("");
+  const [selectedRiskLevel, setSelectedRiskLevel] = useState("");
 
   const PAGE_SIZE = 5;
 
@@ -20,6 +21,7 @@ function App() {
     page = 1,
     country = selectedCountry,
     amount = minAmount,
+    riskLevel = selectedRiskLevel,
   ) => {
     setTransactionsLoading(true);
 
@@ -38,6 +40,10 @@ function App() {
 
     if (amount) {
       params.append("min_amount", amount);
+    }
+
+    if (riskLevel) {
+      params.append("risk_level", riskLevel);
     }
 
     fetch(`http://127.0.0.1:8000/transactions?${params.toString()}`)
@@ -137,7 +143,8 @@ function App() {
     setSearchId("");
     setSelectedCountry("");
     setMinAmount("");
-    fetchTransactions(1, "", "");
+    setSelectedRiskLevel("");
+    fetchTransactions(1, "", "","");
   };
 
   const analyzeTransaction = (transactionId) => {
@@ -244,6 +251,19 @@ function App() {
               onChange={(event) => setMinAmount(event.target.value)}
               min="0"
             />
+
+            <select
+              value={selectedRiskLevel}
+              onChange={(event) => {
+                setSelectedRiskLevel(event.target.value);
+                setSearchId("");
+              }}
+            >
+              <option value="">All Risk Levels</option>
+              <option value="HIGH">High Risk</option>
+              <option value="MEDIUM">Medium Risk</option>
+              <option value="LOW">Low Risk</option>
+            </select>
 
             <button onClick={searchTransactions}>Search</button>
 
