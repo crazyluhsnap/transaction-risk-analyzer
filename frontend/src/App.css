@@ -439,3 +439,14 @@ tbody tr:hover {
 .transaction-detail-grid div:last-child {
   grid-column: 1 / -1;
 }
+
+.transactions-message {
+  padding: 30px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.transactions-message.error {
+  color: #b91c1c;
+}

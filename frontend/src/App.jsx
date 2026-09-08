@@ -15,6 +15,7 @@ function App() {
   const [minAmount, setMinAmount] = useState("");
   const [selectedRiskLevel, setSelectedRiskLevel] = useState("");
   const [minRiskScore, setMinRiskScore] = useState("");
+  const [transactionsError, setTransactionsError] = useState("");
 
   const PAGE_SIZE = 5;
 
@@ -85,7 +86,12 @@ function App() {
           ...analysisMap,
         }));
       })
-      .catch((error) => console.error("Error fetching transactions:", error))
+      .catch((error) => {
+        console.error("Error fetching transactions:", error);
+        setTransactionsError("Unable to load transactions. Please try again.");
+        setTransactions([]);
+        setHasNextPage(false);
+      })
       .finally(() => setTransactionsLoading(false));
   };
 
@@ -294,9 +300,11 @@ function App() {
           </div>
 
           {transactionsLoading ? (
-            <p>Loading transactions...</p>
+            <p className="transactions-message">Loading transactions...</p>
+          ) : transactionsError ? (
+            <p className="transactions-message error">{transactionsError}</p>
           ) : transactions.length === 0 ? (
-            <p>No transactions found.</p>
+            <p className="transactions-message">No transactions found.</p>
           ) : (
             <>
               <div className="table-container">
