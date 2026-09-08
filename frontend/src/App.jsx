@@ -154,6 +154,13 @@ function App() {
     fetchTransactions(1, "", "", "", "");
   };
 
+  const selectedTransaction = selectedAnalysis
+    ? transactions.find(
+        (transaction) =>
+          transaction.transaction_id === selectedAnalysis.transaction_id,
+      )
+    : null;
+
   const analyzeTransaction = (transactionId) => {
     fetch(`http://127.0.0.1:8000/analyze/${transactionId}`, {
       method: "POST",
@@ -395,6 +402,40 @@ function App() {
                         </strong>
                       </div>
                     </div>
+
+                    {selectedTransaction && (
+                      <div className="transaction-detail-grid">
+                        <div>
+                          <span>Sender</span>
+                          <strong>{selectedTransaction.sender}</strong>
+                        </div>
+
+                        <div>
+                          <span>Receiver</span>
+                          <strong>{selectedTransaction.receiver}</strong>
+                        </div>
+
+                        <div>
+                          <span>Amount</span>
+                          <strong>
+                            ₹
+                            {Number(selectedTransaction.amount).toLocaleString(
+                              "en-IN",
+                            )}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <span>Country</span>
+                          <strong>{selectedTransaction.country}</strong>
+                        </div>
+
+                        <div>
+                          <span>Timestamp</span>
+                          <strong>{selectedTransaction.timestamp}</strong>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="risk-reasons">
                       <h4>Reasons</h4>
