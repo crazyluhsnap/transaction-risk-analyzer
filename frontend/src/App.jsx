@@ -16,6 +16,8 @@ function App() {
   const [selectedRiskLevel, setSelectedRiskLevel] = useState("");
   const [minRiskScore, setMinRiskScore] = useState("");
   const [transactionsError, setTransactionsError] = useState("");
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisError, setAnalysisError] = useState("");
 
   const PAGE_SIZE = 5;
 
@@ -168,14 +170,30 @@ function App() {
     : null;
 
   const analyzeTransaction = (transactionId) => {
+    setAnalysisLoading(true);
+    setAnalysisError("");
+    setSelectedAnalysis(null);
+
     fetch(`http://127.0.0.1:8000/analyze/${transactionId}`, {
       method: "POST",
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Analysis request failed");
+        }
+
+        return response.json();
+      })
       .then((data) => {
         setSelectedAnalysis(data);
       })
-      .catch((error) => console.error("Error analyzing transaction:", error));
+      .catch((error) => {
+        console.error("Error analyzing transaction:", error);
+        setAnalysisError("Unable to analyze transaction. Please try again.");
+      })
+      .finally(() => {
+        setAnalysisLoading(false);
+      });
   };
 
   return (
@@ -383,88 +401,115 @@ function App() {
                 </button>
               </div>
 
-              {selectedAnalysis && (
+              {(analysisLoading || analysisError || selectedAnalysis) && (
                 <div className="risk-modal-overlay">
                   <div className="risk-modal">
-                    <button
-                      className="close-button"
-                      onClick={() => setSelectedAnalysis(null)}
-                    >
-                      ×
-                    </button>
-
-                    <h3>Risk Analysis - {selectedAnalysis.transaction_id}</h3>
-
-                    <div className="risk-detail-grid">
-                      <div>
-                        <span>Risk Score</span>
-                        <strong>{selectedAnalysis.risk_score}</strong>
-                      </div>
-
-                      <div>
-                        <span>Risk Level</span>
-                        <strong
-                          className={`risk-level ${selectedAnalysis.risk_level.toLowerCase()}`}
-                        >
-                          {selectedAnalysis.risk_level}
-                        </strong>
-                      </div>
-                    </div>
-
-                    {selectedTransaction && (
-                      <div className="transaction-detail-grid">
-                        <div>
-                          <span>Sender</span>
-                          <strong>{selectedTransaction.sender}</strong>
-                        </div>
-
-                        <div>
-                          <span>Receiver</span>
-                          <strong>{selectedTransaction.receiver}</strong>
-                        </div>
-
-                        <div>
-                          <span>Amount</span>
-                          <strong>
-                            ₹
-                            {Number(selectedTransaction.amount).toLocaleString(
-                              "en-IN",
-                            )}
-                          </strong>
-                        </div>
-
-                        <div>
-                          <span>Country</span>
-                          <strong>{selectedTransaction.country}</strong>
-                        </div>
-
-                        <div>
-                          <span>Timestamp</span>
-                          <strong>{selectedTransaction.timestamp}</strong>
-                        </div>
+                    {analysisLoading && (
+                      <div className="analysis-message">
+                        Analyzing transaction...
                       </div>
                     )}
 
-                    <div className="risk-reasons">
-                      <h4>Reasons</h4>
+                    {analysisError && !analysisLoading && (
+                      <div className="analysis-message error">
+                        <p>{analysisError}</p>
 
-                      {selectedAnalysis.reasons.length === 0 ? (
-                        <p>No risk indicators detected.</p>
-                      ) : (
-                        <ul>
-                          {selectedAnalysis.reasons.map((reason) => (
-                            <li key={reason}>{reason}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
+                        <button
+                          onClick={() => {
+                            setAnalysisError("");
+                            setSelectedAnalysis(null);
+                          }}
+                        >
+                          Close
+                        </button>
+                      </div>
+                    )}
 
-                    <button
-                      className="modal-close-button"
-                      onClick={() => setSelectedAnalysis(null)}
-                    >
-                      Close
-                    </button>
+                    {selectedAnalysis && !analysisLoading && !analysisError && (
+                      <>
+                        <button
+                          className="close-button"
+                          onClick={() => setSelectedAnalysis(null)}
+                        >
+                          ×
+                        </button>
+
+                        <h3>
+                          Risk Analysis - {selectedAnalysis.transaction_id}
+                        </h3>
+
+                        <div className="risk-detail-grid">
+                          <div>
+                            <span>Risk Score</span>
+                            <strong>{selectedAnalysis.risk_score}</strong>
+                          </div>
+
+                          <div>
+                            <span>Risk Level</span>
+                            <strong
+                              className={`risk-level ${selectedAnalysis.risk_level.toLowerCase()}`}
+                            >
+                              {selectedAnalysis.risk_level}
+                            </strong>
+                          </div>
+                        </div>
+
+                        {selectedTransaction && (
+                          <div className="transaction-detail-grid">
+                            <div>
+                              <span>Sender</span>
+                              <strong>{selectedTransaction.sender}</strong>
+                            </div>
+
+                            <div>
+                              <span>Receiver</span>
+                              <strong>{selectedTransaction.receiver}</strong>
+                            </div>
+
+                            <div>
+                              <span>Amount</span>
+                              <strong>
+                                ₹
+                                {Number(
+                                  selectedTransaction.amount,
+                                ).toLocaleString("en-IN")}
+                              </strong>
+                            </div>
+
+                            <div>
+                              <span>Country</span>
+                              <strong>{selectedTransaction.country}</strong>
+                            </div>
+
+                            <div>
+                              <span>Timestamp</span>
+                              <strong>{selectedTransaction.timestamp}</strong>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="risk-reasons">
+                          <h4>Reasons</h4>
+
+                          {selectedAnalysis.reasons.length === 0 ? (
+                            <p>No risk indicators detected.</p>
+                          ) : (
+                            <ul>
+                              {selectedAnalysis.reasons.map((reason) => (
+                                <li key={reason}>{reason}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+
+                        <button
+                          className="modal-close-button"
+                          onClick={() => setSelectedAnalysis(null)}
+                        >
+                          Close
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
