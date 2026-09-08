@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 function App() {
   const [summary, setSummary] = useState(null);
   const [alerts, setAlerts] = useState([]);
@@ -55,7 +57,7 @@ function App() {
       params.append("min_risk_score", riskScore);
     }
 
-    fetch(`http://127.0.0.1:8000/transactions?${params.toString()}`)
+    fetch(`${API_URL}/transactions?${params.toString()}`)
       .then((response) => response.json())
       .then((data) => {
         const pageTransactions = data.slice(0, PAGE_SIZE);
@@ -68,7 +70,7 @@ function App() {
         return Promise.all(
           pageTransactions.map((transaction) =>
             fetch(
-              `http://127.0.0.1:8000/analyze/${transaction.transaction_id}`,
+              `${API_URL}/analyze/${transaction.transaction_id}`,
               {
                 method: "POST",
               },
@@ -98,12 +100,12 @@ function App() {
   };
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/summary")
+    fetch("${API_URL}/summary")
       .then((response) => response.json())
       .then((data) => setSummary(data))
       .catch((error) => console.error("Error fetching summary:", error));
 
-    fetch("http://127.0.0.1:8000/alerts")
+    fetch("${API_URL}/alerts")
       .then((response) => response.json())
       .then((data) => setAlerts(data))
       .catch((error) => console.error("Error fetching alerts:", error));
@@ -120,7 +122,7 @@ function App() {
       const transactionId = searchId.trim();
 
       fetch(
-        `http://127.0.0.1:8000/transactions?transaction_id=${transactionId}`,
+        `${API_URL}/transactions?transaction_id=${transactionId}`,
       )
         .then((response) => response.json())
         .then((data) => {
@@ -132,7 +134,7 @@ function App() {
 
           const foundTransactionId = data[0].transaction_id;
 
-          return fetch(`http://127.0.0.1:8000/analyze/${foundTransactionId}`, {
+          return fetch(`${API_URL}/analyze/${foundTransactionId}`, {
             method: "POST",
           }).then((response) => response.json());
         })
@@ -174,7 +176,7 @@ function App() {
     setAnalysisError("");
     setSelectedAnalysis(null);
 
-    fetch(`http://127.0.0.1:8000/analyze/${transactionId}`, {
+    fetch(`${API_URL}/analyze/${transactionId}`, {
       method: "POST",
     })
       .then((response) => {
