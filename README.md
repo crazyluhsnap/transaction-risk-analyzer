@@ -185,39 +185,6 @@ The dashboard exposes these details through the View Risk action.
 
 ---
 
-## Project Structure
-
-transaction-risk-analyzer/
-|
-├── app/
-│   ├── tests/
-│   |
-│   ├── main.py
-│   ├── analyzer.py
-│   ├── account_analyzer.py
-│   ├── analysis_service.py
-│   ├── networkx_network_analyzer.py
-│   ├── network_risk.py
-│   ├── risk_aggregator.py
-│   └── models.py
-|
-├── data/
-│   └── transactions.csv
-|
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx
-│   │   └── App.css
-│   |
-│   ├── .env.example
-│   ├── package.json
-│   └── vite.config.js
-|
-├── pytest.ini
-├── .gitignore
-└── README.md
-
----
 
 ## Backend Setup
 
